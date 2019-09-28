@@ -1,14 +1,20 @@
-FROM ubuntu:18.10
-RUN apt-get update
-RUN apt-get -y install openjdk-11-jdk
-RUN apt-get -y install maven
-ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64
-VOLUME /tmp
-RUN mkdir /app
-WORKDIR /app
-# jar target
-ENV JAR_TARGET "dtest-0.0.1-SNAPSHOT.jar"
-COPY ./ ./
-# RUN mvn package
-# set entrypoint to execute spring boot application
-ENTRYPOINT ["sh","-c","mvn spring-boot:run -Dspring-boot.run.profiles=docker"]
+FROM maven:3.3.9-jdk-8-alpine AS build
+COPY ./ /work
+WORKDIR /work
+RUN mvn clean package
+
+
+FROM openjdk:8u181-jre-alpine3.8
+
+
+WORKDIR /home
+
+COPY ./run.sh /usr/local/bin/run.sh
+RUN chmod +x /usr/local/bin/run.sh
+
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.6.0/wait /wait
+RUN chmod +x /wait
+
+COPY --from=build /work/target/dtest-0.0.1-SNAPSHOT.jar /home/
+
+CMD /wait && /usr/local/bin/run.sh

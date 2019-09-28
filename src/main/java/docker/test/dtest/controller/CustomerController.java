@@ -20,6 +20,7 @@ public class CustomerController {
     String list(Model model) {
         List<Customer> customers = customerService.findAll();
         model.addAttribute("customers", customers);
+        System.out.println("変更テスト");
         return "customer/list";
     }
 }
